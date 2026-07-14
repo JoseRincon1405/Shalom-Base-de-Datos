@@ -11,7 +11,8 @@ export const MOCK_PRODUCTS: Product[] = [
     sell: 1.50,
     stock: 50,
     minStock: 10,
-    unit: 'Kg'
+    unit: 'Kg',
+    image: '/harina-de-trigo.jpg'
   },
   {
     id: '2',
@@ -22,7 +23,8 @@ export const MOCK_PRODUCTS: Product[] = [
     sell: 2.34,
     stock: 8, // Provocará alerta de stock crítico
     minStock: 15,
-    unit: 'Kg'
+    unit: 'Kg',
+    image: '/azucar-glass.jpeg'
   },
   {
     id: '3',
@@ -33,7 +35,8 @@ export const MOCK_PRODUCTS: Product[] = [
     sell: 2.80,
     stock: 12,
     minStock: 5,
-    unit: 'Unidad'
+    unit: 'Unidad',
+    image: '/boquillas.jpg'
   },
   {
     id: '4',
@@ -44,7 +47,8 @@ export const MOCK_PRODUCTS: Product[] = [
     sell: 4.72,
     stock: 20,
     minStock: 6,
-    unit: 'Unidad'
+    unit: 'Unidad',
+    image: '/colorante-gel.jpg'
   },
   {
     id: '5',
@@ -55,6 +59,7 @@ export const MOCK_PRODUCTS: Product[] = [
     sell: 6.50,
     stock: 4,
     minStock: 5, // Alerta
-    unit: 'Unidad'
+    unit: 'Unidad',
+    image: '/molde-aluminio.jpg'
   }
 ];

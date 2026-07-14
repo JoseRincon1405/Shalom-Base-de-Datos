@@ -9,6 +9,7 @@ export type Product = {
     stock: number;
     minStock: number; // Para la alerta de punto de reorden crítico
     unit: string; // "Kg", "Unidad", "Litro", etc.
+    image: string; // URL de la imagen del producto
 }
 
 export type ItemCart = {
