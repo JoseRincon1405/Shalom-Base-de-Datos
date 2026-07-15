@@ -17,6 +17,7 @@ export default function Sidebar() {
 
   return (
     <aside className="bg-gray-900 text-white w-64 min-h-screen p-5 flex flex-col justify-between fixed left-0 top-0">
+        <div>
         <div className="mb-10 pt-2 px-2">
             <h1 className="font-black text-3xl tracking-tight text-amber-400">inFlow</h1>
             <p className="text-xs text-gray-400 uppercase tracking-widest mt-1">SaaS de Comercio</p>
@@ -32,13 +33,24 @@ export default function Sidebar() {
                         key={tab.id}
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={``}
+                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                    isSelected
+                            ? "bg-amber-400 text-gray-900 shadow-md font-bold" 
+                            : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                }`}
                     >
+                    <span className="text-lg">{tab.icon}</span>
+                    {tab.name}
 
                     </button>
                 )
             })}
         </nav>
+        </div>
+
+        <div className="border-t border-gray-800 pt-4 px-2 text-xs text-gray-500">
+            Modo Híbrido Activo
+        </div>
     </aside>
   )
 }

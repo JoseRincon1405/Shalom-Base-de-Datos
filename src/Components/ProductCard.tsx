@@ -1,3 +1,4 @@
+import { useAppStore } from "@/stores/useAppStore";
 import { Product } from "@/types";
 import Image from "next/image";
 
@@ -8,6 +9,19 @@ type ProductCardProps = {
 export default function ProductsCard({ product }: ProductCardProps) {
 
   const isStockCritical = product.stock <= 5; 
+
+  const actualCurrency = useAppStore((state) => state.currency)
+  const exchangeRate = useAppStore((state) => state.exchangeRate)
+  const addToCart = useAppStore((state) => state.addToCart) 
+  const cart = useAppStore((state) => state.cart)
+
+  const BolivarExchangeRate = product.sell * exchangeRate
+
+  const handleAddToCart = (product : Product) => {
+    const existingItemCart = cart.find((item) => item.product.id === product.id)
+
+    addToCart(product, 1)
+  }
 
   return (
     <div className="bg-white border border-gray-100 p-4 rounded-xl shadow-sm flex flex-col justify-between hover:border-amber-200 transition-all">
@@ -29,8 +43,7 @@ export default function ProductsCard({ product }: ProductCardProps) {
           <Image 
             src={product.image || "/placeholder.png"} 
             alt={product.name} 
-            width={100} 
-            height={100} 
+            fill
             className="object-contain p-1"
           />
         </div>
@@ -45,12 +58,12 @@ export default function ProductsCard({ product }: ProductCardProps) {
       <div className="mt-4 pt-3 border-t border-gray-50 flex justify-between items-end">
         <div>
           <p className="text-[10px] text-gray-400 font-medium">Precio</p>
-          <p className="text-base font-bold text-gray-900">${product.sell.toFixed(2)}</p>
+          <p className="text-base font-bold text-gray-900">{actualCurrency === "USD" ? `$${product.sell.toFixed(2)}` : `${BolivarExchangeRate.toFixed(2)} Bs`}</p>
         </div>
         <div className="text-right">
           <p className="text-[10px] text-gray-400 font-medium">Stock</p>
           <p className={`text-xs font-semibold ${isStockCritical ? 'text-red-600' : 'text-gray-600'}`}>
-            {product.stock} unds
+            {product.stock} unidades
           </p>
         </div>
       </div>
@@ -59,6 +72,7 @@ export default function ProductsCard({ product }: ProductCardProps) {
       <button 
         type="button"
         className="w-full mt-4 bg-gray-900 hover:bg-amber-400 hover:text-gray-900 text-white py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+        onClick={()=> handleAddToCart(product)}
       >
         Agregar
       </button>
