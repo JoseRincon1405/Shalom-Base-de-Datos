@@ -9,6 +9,12 @@ export type CartItem = {
 type TabOptions = "punto-de-venta" | "inventario" | "ventas" | "configuracion";
 
 type AppState = {
+
+  // Productos de la DB
+  products : Product[]
+  setProducts : (products: Product[]) => void
+  addProduct : (product : Product) => void
+
   // Para Navegación de pestañas
   activeTab: TabOptions;
   setActiveTab: (value: TabOptions) => void;
@@ -38,6 +44,11 @@ type AppState = {
 };
 
 export const useAppStore = create<AppState>((set) => ({
+    products: [],
+    setProducts: (value : Product[]) => set({ products: value }),
+    addProduct: ( newProduct : Product) => set((state) => ({
+      products: [newProduct, ...state.products]
+    })),
     activeTab: "punto-de-venta",
     setActiveTab: (value: TabOptions) => set({ activeTab: value }),
 

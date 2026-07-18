@@ -1,18 +1,35 @@
 "use client";
 
-import Sidebar from "@/components/Sidebar";
-import SearchBar from "@/components/SearchBar";
-import TasaSelector from "@/components/TasaSelector";
-import ProductsCard from "@/components/ProductCard";
+import Sidebar from "@/Components/Sidebar";
+import SearchBar from "@/Components/SearchBar";
+import TasaSelector from "@/Components/TasaSelector";
+import ProductsCard from "@/Components/ProductCard";
 import { MOCK_PRODUCTS } from "@/constants/mockData";
 import { useAppStore } from "@/stores/useAppStore";
-import ProductsCart from "@/components/ProductsCart";
+import ProductsCart from "@/Components/ProductsCart";
+import { useEffect } from "react";
+import { getProducts } from "../actions/products";
 
 export default function PuntoDeVentaPage() {
+
+ 
+
   // Leemos la pestaña activa y los filtros desde Zustand
   const activeTab = useAppStore((state) => state.activeTab);
   const search = useAppStore((state) => state.search);
   const category = useAppStore((state) => state.category);    
+  const setProducts = useAppStore((state) => state.setProducts)
+
+   // Carga de los productos de la base de datos
+  useEffect(() => {
+    const loadFromDb = async () => {
+      const data = await getProducts()
+
+      setProducts(data)
+    }
+
+    loadFromDb()
+  }, [setProducts])
      
   const filteredProducts = MOCK_PRODUCTS.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
@@ -25,6 +42,7 @@ export default function PuntoDeVentaPage() {
     switch (activeTab) {
       case "punto-de-venta":
         return (
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Catálogo */}
             <div className="lg:col-span-2">

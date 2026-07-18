@@ -1,5 +1,9 @@
+
+import { createSale, SaleItemInput } from "@/app/actions/sales"
+import { prisma } from "@/lib/prisma"
 import { useAppStore } from "@/stores/useAppStore"
 import Image from "next/image"
+import { useState } from "react"
 import { FaPlus, FaMinus, FaShoppingBag } from "react-icons/fa"
 
 export default function ProductsCart() {
@@ -10,13 +14,49 @@ export default function ProductsCart() {
   const decreaseQuantity = useAppStore((state) => state.decreaseQuantity)
   const removeFromCart = useAppStore((state) => state.removeFromCart)
   const clearCart = useAppStore((state) => state.clearCart)
-
+ 
 
   const totalUSD = cart.reduce((acc, item) => acc + item.product.sell * item.quantity, 0)
   const totalDisplay = actualCurrency === "USD" 
     ? `$${totalUSD.toFixed(2)}` 
     : `${(totalUSD * exchangeRate).toFixed(2)} Bs`
 
+    const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
+
+    const handleProcessSale = async () => {
+      if (cart.length === 0 ) return
+
+      setError(null)
+      setLoading(true)
+      
+      try {
+        const itemsToSend : SaleItemInput[] = cart.map((item) => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+          priceAtSale : item.product.sell
+        }))
+
+        const response = await createSale(itemsToSend, totalUSD);
+
+      setLoading(false); // Apagamos el estado de carga cuando el servidor responde
+
+
+      if (response.success) {
+        // ¡Todo salió perfecto en Neon!
+        alert("¡Venta procesada con éxito e inventario actualizado!");
+        
+        // Vaciamos el carrito local en Zustand para dejar la pantalla lista para el siguiente cliente
+        clearCart();
+      } else {
+        setError(response.error || "Error al enviar datos a la base de datos")
+      }
+
+    } catch(err) {
+      setLoading(false)
+      setError("Error al conectar al servidor", )
+    }
+    }
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[calc(100vh-120px)] sticky top-6">
       {/* Cabecera del Carrito */}
@@ -139,7 +179,11 @@ export default function ProductsCart() {
 
           <button
             type="button"
-            className="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl hover:bg-amber-400 hover:text-gray-900 transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer text-sm"
+            disabled={loading}
+            onClick={handleProcessSale}
+            className={`w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer text-sm ${
+            loading ? "bg-gray-400 cursor-not-allowed" : "bg-gray-900 hover:bg-amber-400 hover:text-gray-900"
+            }`}
           >
             Procesar Venta 
           </button>

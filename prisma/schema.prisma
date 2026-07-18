@@ -1,0 +1,48 @@
+
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id          String @id @default(uuid())
+  name        String @unique
+  category    String
+  cost        Decimal
+  sell        Decimal
+  stock       Int
+  minStock    Int
+  unit        String
+  image       String 
+
+  saleItems SaleItem[]
+
+}
+
+model Sale {
+  id          String     @id @default(uuid())
+  total       Float     
+  createdAt   DateTime   @default(now())
+
+  items       SaleItem[]
+}
+
+model SaleItem {
+  id          String   @id @default(uuid())
+  saleId      String
+  productId   String
+  quantity    Int      
+  price       Decimal    
+
+  // Relaciones explícitas
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@index([saleId])
+  @@index([productId])
+}
