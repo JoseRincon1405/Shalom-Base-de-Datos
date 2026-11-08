@@ -1,0 +1,163 @@
+// inFlow — Sistema de inventario y punto de venta para insumos de repostería
+// Prisma 7 · PostgreSQL
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Rol {
+  ADMIN
+  CAJERO
+}
+
+enum UnidadMedida {
+  KG
+  GRAMO
+  ML
+  LITRO
+  UNIDAD
+  PAQUETE
+}
+
+enum MetodoPago {
+  EFECTIVO_USD
+  PAGO_MOVIL
+  ZELLE
+  EFECTIVO_VES
+  MIXTO
+}
+
+enum TipoMovimiento {
+  ENTRADA
+  VENTA
+  AJUSTE_MERMA
+  CORRECCION
+}
+
+/// Usuarios del sistema. El primer registro creado por el seed es ADMIN.
+model Usuario {
+  id        String   @id @default(cuid())
+  nombre    String   @db.VarChar(120)
+  email     String   @unique @db.VarChar(160)
+  password  String   @db.VarChar(255)
+  rol       Rol      @default(CAJERO)
+  activo    Boolean  @default(true)
+  creadoEn  DateTime @default(now())
+
+  ventas                 Venta[]
+  movimientosInventario  MovimientoInventario[]
+  configuraciones        ConfiguracionSistema[]
+
+  @@index([rol, activo])
+  @@map("usuarios")
+}
+
+/// Configuración global (singleton). La tasa se congela en cada venta.
+model ConfiguracionSistema {
+  id                    String   @id @default("global")
+  tasaDolarVes          Decimal  @db.Decimal(14, 4)
+  ultimaActualizacion   DateTime @default(now()) @updatedAt
+  actualizadoPorUsuarioId String?
+  actualizadoPorUsuario Usuario? @relation(fields: [actualizadoPorUsuarioId], references: [id], onDelete: SetNull)
+
+  @@map("configuracion_sistema")
+}
+
+model Categoria {
+  id          String    @id @default(cuid())
+  nombre      String    @unique @db.VarChar(80)
+  descripcion String?   @db.VarChar(255)
+  creadoEn    DateTime  @default(now())
+  productos   Producto[]
+
+  @@map("categorias")
+}
+
+model Producto {
+  id                 String       @id @default(cuid())
+  codigoBarras       String?      @unique @db.VarChar(80)
+  nombre             String       @db.VarChar(160)
+  descripcion        String?      @db.VarChar(500)
+  categoriaId        String
+  categoria          Categoria    @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  unidadMedida       UnidadMedida @default(UNIDAD)
+  costoCompraUSD     Decimal      @db.Decimal(14, 4)
+  porcentajeGanancia Decimal      @db.Decimal(8, 2)
+  precioDetalUSD     Decimal      @db.Decimal(14, 2)
+  precioMayorUSD     Decimal?     @db.Decimal(14, 2)
+  stock              Decimal      @default(0) @db.Decimal(14, 3)
+  stockMinimo        Decimal      @default(0) @db.Decimal(14, 3)
+  activo             Boolean      @default(true)
+  creadoEn           DateTime     @default(now())
+  actualizadoEn      DateTime     @default(now()) @updatedAt
+
+  detallesVenta  DetalleVenta[]
+  movimientos    MovimientoInventario[]
+
+  @@index([nombre])
+  @@index([categoriaId, activo])
+  @@index([activo, stock])
+  @@map("productos")
+}
+
+/// Venta con la tasa congelada para reportería contable histórica.
+model Venta {
+  id                 String     @id @default(cuid())
+  numeroFactura      Int        @unique @default(autoincrement())
+  usuarioId          String
+  usuario            Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  totalUSD           Decimal    @db.Decimal(14, 2)
+  totalVES           Decimal    @db.Decimal(14, 2)
+  tasaCambioAplicada Decimal    @db.Decimal(14, 4)
+  metodoPago         MetodoPago
+  fecha              DateTime   @default(now())
+
+  detalles DetalleVenta[]
+
+  @@index([fecha])
+  @@index([metodoPago, fecha])
+  @@index([usuarioId, fecha])
+  @@map("ventas")
+}
+
+model DetalleVenta {
+  id                String   @id @default(cuid())
+  ventaId           String
+  venta             Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
+  productoId        String
+  producto          Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  cantidad          Decimal  @db.Decimal(14, 3)
+  precioUnitarioUSD Decimal  @db.Decimal(14, 2)
+  subtotalUSD       Decimal  @db.Decimal(14, 2)
+  nombreProducto    String   @db.VarChar(160)
+  unidadMedida      UnidadMedida
+
+  @@index([ventaId])
+  @@index([productoId])
+  @@map("detalle_ventas")
+}
+
+/// Auditoría inmutable de movimientos de inventario.
+model MovimientoInventario {
+  id            String         @id @default(cuid())
+  productoId    String
+  producto      Producto       @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  usuarioId     String
+  usuario       Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  tipo          TipoMovimiento
+  cantidad      Decimal        @db.Decimal(14, 3)
+  stockAnterior Decimal        @db.Decimal(14, 3)
+  stockNuevo    Decimal        @db.Decimal(14, 3)
+  motivo        String?        @db.VarChar(255)
+  fecha         DateTime       @default(now())
+
+  @@index([productoId, fecha])
+  @@index([usuarioId, fecha])
+  @@index([tipo, fecha])
+  @@map("movimientos_inventario")
+}
